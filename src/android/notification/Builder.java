@@ -133,13 +133,24 @@ public class Builder {
         if (sound != null) {
             builder.setSound(sound);
         }
-
+       
+        if (android.os.Build.VERSION.SDK_INT >= 21) {//Build.VERSION_CODES.LOLLIPOP
+            builder.setColor(Color.rgb(255,165,0));//255, 165, 0 orange
+            builder.setSmallIcon(options.getSmallIcon());
+            builder.setLargeIcon(options.getIconBitmap());
+        }
+        else {
+            //behave like if not set
+            notification.setSmallIcon(options.getIcon());
+        }
+        
+        /*
         if (smallIcon == 0) {
             builder.setSmallIcon(options.getIcon());
         } else {
             builder.setSmallIcon(options.getSmallIcon());
             builder.setLargeIcon(options.getIconBitmap());
-        }
+        }*/
 
         applyDeleteReceiver(builder);
         applyContentReceiver(builder);
