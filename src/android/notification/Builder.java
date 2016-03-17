@@ -30,7 +30,7 @@ import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
 
 import org.json.JSONObject;
-
+import android.graphics.Color;
 import java.util.Random;
 
 /**
@@ -127,7 +127,7 @@ public class Builder {
                 .setTicker(options.getText())
                 .setAutoCancel(options.isAutoClear())
                 .setOngoing(options.isOngoing())
-                .setColor(options.getColor())
+                //.setColor(options.getColor())
                 .setLights(options.getLedColor(), 100, 100);
 
         if (sound != null) {
@@ -135,13 +135,14 @@ public class Builder {
         }
        
         if (android.os.Build.VERSION.SDK_INT >= 21) {//Build.VERSION_CODES.LOLLIPOP
-            builder.setColor(Color.rgb(255,165,0));//255, 165, 0 orange
+            builder.setColor(options.getColor());//Color.rgb(255,165,0) orange
             builder.setSmallIcon(options.getSmallIcon());
             builder.setLargeIcon(options.getIconBitmap());
         }
         else {
             //behave like if not set
-            notification.setSmallIcon(options.getIcon());
+            builder.setSmallIcon(options.getIcon());
+            builder.setLargeIcon(options.getIconBitmap());
         }
         
         /*
