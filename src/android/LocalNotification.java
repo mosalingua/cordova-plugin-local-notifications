@@ -37,7 +37,7 @@ import org.json.JSONObject;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.lang.Exception;
 import de.appplant.cordova.plugin.notification.Manager;
 import de.appplant.cordova.plugin.notification.Notification;
 
@@ -213,10 +213,16 @@ public class LocalNotification extends CordovaPlugin {
         for (int i = 0; i < notifications.length(); i++) {
             JSONObject options = notifications.optJSONObject(i);
 
-            Notification notification =
-                    getNotificationMgr().schedule(options, TriggerReceiver.class);
+            try {
+                Notification notification =
+                        getNotificationMgr().schedule(options, TriggerReceiver.class);
 
-            fireEvent("schedule", notification);
+                fireEvent("schedule", notification);
+            }
+            catch(Exception generic) {
+                //on some samsumg devices there is a known bug, a 500 alarms limit that can crash the app
+                //silently ignore
+            }
         }
     }
 
