@@ -120,6 +120,9 @@ public class Builder {
         int ledColor  = options.getLedColor();
         NotificationCompat.Builder builder;
 
+        //ADD support for collapsable notifications
+        //https://github.com/katzer/cordova-plugin-local-notifications/pull/1243/commits/9b7d0efee927e4de3cccb993066226e1a407d016
+
         builder = new NotificationCompat.Builder(context)
                 .setDefaults(0)
                 .setContentTitle(options.getTitle())
@@ -130,6 +133,10 @@ public class Builder {
                 .setOngoing(options.isOngoing())
                 //.setColor(options.getColor())
                 .setLights(options.getLedColor(), 100, 100);
+
+        builder.setStyle(new NotificationCompat.BigTextStyle()
+                     .bigText(options.getText())
+                     .setBigContentTitle(options.getTitle()));     
  
 
         if (ledColor != 0) {
