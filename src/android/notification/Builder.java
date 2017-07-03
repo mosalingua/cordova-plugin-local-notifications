@@ -117,6 +117,7 @@ public class Builder {
     public Notification build() {
         Uri sound     = options.getSoundUri();
         int smallIcon = options.getSmallIcon();
+        int ledColor  = options.getLedColor();
         NotificationCompat.Builder builder;
 
         builder = new NotificationCompat.Builder(context)
@@ -129,6 +130,11 @@ public class Builder {
                 .setOngoing(options.isOngoing())
                 //.setColor(options.getColor())
                 .setLights(options.getLedColor(), 100, 100);
+ 
+
+        if (ledColor != 0) {
+            builder.setLights(ledColor, options.getLedOnTime(), options.getLedOffTime());
+        }
 
         if (sound != null) {
             builder.setSound(sound);
