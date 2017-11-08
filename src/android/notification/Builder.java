@@ -157,12 +157,12 @@ public final class Builder {
         if (android.os.Build.VERSION.SDK_INT >= 21) {//Build.VERSION_CODES.LOLLIPOP
             builder.setColor(options.getColor());//Color.rgb(255,165,0) orange
             builder.setSmallIcon(options.getSmallIcon());
-            builder.setLargeIcon(options.getIconBitmap());
+            builder.setLargeIcon(options.getLargeIcon());
         }
         else {
             //behave like if not set
-            builder.setSmallIcon(options.getIcon());
-            builder.setLargeIcon(options.getIconBitmap());
+            builder.setSmallIcon(options.getSmallIcon());
+            builder.setLargeIcon(options.getLargeIcon());
         }
         
 
