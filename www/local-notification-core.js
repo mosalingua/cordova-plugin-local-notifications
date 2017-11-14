@@ -73,7 +73,7 @@ exports.schedule = function (msgs, callback, scope, args) {
 
             this.mergeWithDefaults(notification);     
             this.convertProperties(notification);     
-        }               }
+        }
           
         this.exec('schedule', notifications, callback, scope);
 
