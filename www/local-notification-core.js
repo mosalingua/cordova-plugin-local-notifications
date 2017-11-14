@@ -116,7 +116,7 @@ exports.update = function (msgs, callback, scope, args) {
             var notification = notifications[i];  
                      
             this.convertProperties(notification);     
-        }               }
+        }
           
         this.exec('update', notifications, callback, scope);
 
