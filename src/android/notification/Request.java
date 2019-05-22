@@ -64,16 +64,30 @@ public final class Request {
     private Date triggerDate;
 
     /**
-     * Constructor
+     * Create a request with a base date specified through the passed options.
      *
      * @param options The options spec.
      */
     public Request(Options options) {
         this.options     = options;
         this.spec        = options.getTrigger();
-        this.count       = spec.optInt("count", 1);
+        this.count       = Math.max(spec.optInt("count"), 1);
         this.trigger     = buildTrigger();
         this.triggerDate = trigger.getNextTriggerDate(getBaseDate());
+    }
+
+    /**
+     * Create a request with a base date specified via base argument.
+     *
+     * @param options The options spec.
+     * @param base    The base date from where to calculate the next trigger.
+     */
+    public Request(Options options, Date base) {
+        this.options     = options;
+        this.spec        = options.getTrigger();
+        this.count       = Math.max(spec.optInt("count"), 1);
+        this.trigger     = buildTrigger();
+        this.triggerDate = trigger.getNextTriggerDate(base);
     }
 
     /**
@@ -88,7 +102,7 @@ public final class Request {
      *
      * @return The notification ID as the string
      */
-    public String getIdentifier() {
+    String getIdentifier() {
         return options.getId().toString() + "-" + getOccurrence();
     }
 
@@ -103,7 +117,7 @@ public final class Request {
      * If there's one more trigger date to calculate.
      */
     private boolean hasNext() {
-        return triggerDate != null && getOccurrence() < count;
+        return triggerDate != null && getOccurrence() <= count;
     }
 
     /**
@@ -124,15 +138,19 @@ public final class Request {
      *
      * @return null if there's no trigger date.
      */
-    Date getTriggerDate() {
+    public Date getTriggerDate() {
         Calendar now = Calendar.getInstance();
 
         if (triggerDate == null)
             return null;
 
-        if ((now.getTimeInMillis() - triggerDate.getTime()) > 60000) {
+        long time = triggerDate.getTime();
+
+        if ((now.getTimeInMillis() - time) > 60000)
             return null;
-        }
+
+        if (time >= spec.optLong("before", time + 1))
+            return null;
 
         return triggerDate;
     }
@@ -241,7 +259,13 @@ public final class Request {
      */
     private Date getBaseDate() {
         if (spec.has("at")) {
-            return new Date(spec.optLong("at", 0) * 1000);
+            return new Date(spec.optLong("at", 0));
+        } else
+        if (spec.has("firstAt")) {
+            return new Date(spec.optLong("firstAt", 0));
+        } else
+        if (spec.has("after")) {
+            return new Date(spec.optLong("after", 0));
         } else {
             return new Date();
         }

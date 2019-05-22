@@ -21,7 +21,7 @@
 
 package de.appplant.cordova.plugin.notification.receiver;
 
-import android.app.Activity;
+import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -38,20 +38,31 @@ import static de.appplant.cordova.plugin.notification.action.Action.EXTRA_ID;
  * Abstract content receiver activity for local notifications. Creates the
  * local notification and calls the event functions for further proceeding.
  */
-abstract public class AbstractClickReceiver extends Activity {
+abstract public class AbstractClickReceiver extends IntentService {
+
+    // Holds a reference to the intent to handle.
+    private Intent intent;
+
+    public AbstractClickReceiver() {
+        super("LocalNotificationClickReceiver");
+    }
 
     /**
      * Called when local notification was clicked to launch the main intent.
-     *
-     * @param state Saved instance state
      */
     @Override
-    public void onCreate (Bundle state) {
-        super.onCreate(state);
+    protected void onHandleIntent(Intent intent) {
+        this.intent        = intent;
 
-        Intent intent      = getIntent();
+        if (intent == null)
+            return;
+
         Bundle bundle      = intent.getExtras();
         Context context    = getApplicationContext();
+
+        if (bundle == null)
+            return;
+
         int toastId        = bundle.getInt(Notification.EXTRA_ID);
         Notification toast = Manager.getInstance(context).get(toastId);
 
@@ -59,16 +70,7 @@ abstract public class AbstractClickReceiver extends Activity {
             return;
 
         onClick(toast, bundle);
-    }
-
-    /**
-     * Fixes "Unable to resume activity" error.
-     * Theme_NoDisplay: Activities finish themselves before being resumed.
-     */
-    @Override
-    protected void onResume() {
-        super.onResume();
-        finish();
+        this.intent = null;
     }
 
     /**
@@ -87,6 +89,13 @@ abstract public class AbstractClickReceiver extends Activity {
     }
 
     /**
+     * Getter for the received intent.
+     */
+    protected Intent getIntent() {
+        return intent;
+    }
+
+    /**
      * Launch main intent from package.
      */
     protected void launchApp() {
@@ -97,8 +106,12 @@ abstract public class AbstractClickReceiver extends Activity {
                 .getPackageManager()
                 .getLaunchIntentForPackage(pkgName);
 
+        if (intent == null)
+            return;
+
         intent.addFlags(
-                FLAG_ACTIVITY_REORDER_TO_FRONT | FLAG_ACTIVITY_SINGLE_TOP);
+              FLAG_ACTIVITY_REORDER_TO_FRONT
+            | FLAG_ACTIVITY_SINGLE_TOP);
 
         context.startActivity(intent);
     }

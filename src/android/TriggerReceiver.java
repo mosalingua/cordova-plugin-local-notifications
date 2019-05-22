@@ -21,12 +21,25 @@
 
 package de.appplant.cordova.plugin.localnotification;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.os.PowerManager;
+
+import java.util.Calendar;
 
 import de.appplant.cordova.plugin.notification.Builder;
 import de.appplant.cordova.plugin.notification.Manager;
 import de.appplant.cordova.plugin.notification.Notification;
+import de.appplant.cordova.plugin.notification.Options;
+import de.appplant.cordova.plugin.notification.Request;
 import de.appplant.cordova.plugin.notification.receiver.AbstractTriggerReceiver;
+
+import static android.content.Context.POWER_SERVICE;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.LOLLIPOP;
+import static de.appplant.cordova.plugin.localnotification.LocalNotification.fireEvent;
+import static de.appplant.cordova.plugin.localnotification.LocalNotification.isAppRunning;
+import static java.util.Calendar.MINUTE;
 
 /**
  * The alarm receiver is triggered when a scheduled alarm is fired. This class
@@ -46,16 +59,59 @@ public class TriggerReceiver extends AbstractTriggerReceiver {
     @Override
     public void onTrigger (Notification notification, Bundle bundle) {
         boolean isUpdate = bundle.getBoolean(Notification.EXTRA_UPDATE, false);
-        int badge        = notification.getOptions().getBadgeNumber();
+        Context context  = notification.getContext();
+        Options options  = notification.getOptions();
+        Manager manager  = Manager.getInstance(context);
+        int badge        = options.getBadgeNumber();
 
         if (badge > 0) {
-            Manager.getInstance(notification.getContext()).setBadge(badge);
+            manager.setBadge(badge);
+        }
+
+        if (options.shallWakeUp()) {
+            wakeUp(context);
         }
 
         notification.show();
 
-        if (!isUpdate) {
-            LocalNotification.fireEvent("trigger", notification);
+        if (!isUpdate && isAppRunning()) {
+            fireEvent("trigger", notification);
+        }
+
+        if (!options.isInfiniteTrigger())
+            return;
+
+        Calendar cal = Calendar.getInstance();
+        cal.add(MINUTE, 1);
+        Request req  = new Request(options, cal.getTime());
+
+        manager.schedule(req, this.getClass());
+    }
+
+    /**
+     * Wakeup the device.
+     *
+     * @param context The application context.
+     */
+    private void wakeUp (Context context) {
+        PowerManager pm = (PowerManager) context.getSystemService(POWER_SERVICE);
+
+        if (pm == null)
+            return;
+
+        int level =   PowerManager.SCREEN_DIM_WAKE_LOCK
+                    | PowerManager.ACQUIRE_CAUSES_WAKEUP;
+
+        PowerManager.WakeLock wakeLock = pm.newWakeLock(
+                level, "LocalNotification");
+
+        wakeLock.setReferenceCounted(false);
+        wakeLock.acquire(1000);
+
+        if (SDK_INT >= LOLLIPOP) {
+            wakeLock.release(PowerManager.RELEASE_FLAG_WAIT_FOR_NO_PROXIMITY);
+        } else {
+            wakeLock.release();
         }
     }
 
