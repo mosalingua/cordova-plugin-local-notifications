@@ -102,15 +102,66 @@ UNNotificationPresentationOptions const OptionAlert = UNNotificationPresentation
 
     [self.commandDelegate runInBackground:^{
         for (NSDictionary* options in notifications) {
-            APPNotificationContent* notification;
-
-            notification = [[APPNotificationContent alloc]
-                            initWithOptions:options];
-
-            [self scheduleNotification:notification];
+            
+            
+            //if there is no payload something is wrong somewhere, skip this one!
+            NSString *payload = [options objectForKey:@"data"];
+            if(payload != nil && payload.length > 1) {
+                
+                UILocalNotification* notification;
+                
+                notification = [[UILocalNotification alloc]
+                                initWithOptions:options];
+                notification.timeZone = [NSTimeZone defaultTimeZone];
+                notification.repeatInterval = 0;
+                
+                
+                @try {
+                    [self scheduleLocalNotification:[notification copy]];
+                    [self fireEvent:@"schedule" notification:notification];
+                    
+                } @catch (NSException *exception) {
+                    //do nothing for now
+                } @finally {
+                    if (notifications.count > 1) {
+                        [NSThread sleepForTimeInterval:0.01];
+                    }
+                }
+                
+                if (notifications.count > 1) {
+                    [NSThread sleepForTimeInterval:0.01];
+                }
+            }
+            
         }
 
-        [self check:command];
+            
+            
+            /* forget the icon change, does not work as we want
+            if (@available(iOS 10.3, *)) {
+                NSString * icon = @"icones"; //TODO
+                if(icon != nil) {
+                    if([icon isEqualToString:@"nil"])
+                        icon = nil;
+                    
+                    NSLog(@"icon is: %@", icon);
+                    
+                    if ([UIApplication sharedApplication].applicationState != UIApplicationStateActive) {
+                        __block __weak id observer = [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidBecomeActiveNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
+                            [[NSNotificationCenter defaultCenter] removeObserver:observer name:UIApplicationDidBecomeActiveNotification object:nil];
+                            [[UIApplication sharedApplication] setAlternateIconName:icon completionHandler:^(NSError * _Nullable error) {
+                                NSLog(@"Set icon error = %@", error.localizedDescription);
+                            }];
+                        }];
+                    } else {
+                        [[UIApplication sharedApplication] setAlternateIconName:icon completionHandler:^(NSError * _Nullable error) {
+                            NSLog(@"Set icon error = %@", error.localizedDescription);
+                        }];
+                    }
+                }
+            }*/
+            
+        [self execCallback:command];
     }];
 }
 
